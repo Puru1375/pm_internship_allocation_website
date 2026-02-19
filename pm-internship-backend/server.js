@@ -31,8 +31,8 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",             // Local Frontend
   "http://localhost:5174",
-  "https://pm-internship-frontend.vercel.app",    // <--- REPLACE THIS with your actual Vercel App URL
-  "https://pm-internship-frontend.vercel.app" // Add any other variations if you renamed it
+  "https://pminternshipallocation.vercel.app",    // <--- REPLACE THIS with your actual Vercel App URL
+  "https://pminternshipallocation.vercel.app" // Add any other variations if you renamed it
 ];
 
 // ✅ CORS Configuration - Allow localhost origins
