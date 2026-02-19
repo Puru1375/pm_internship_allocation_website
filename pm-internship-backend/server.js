@@ -28,25 +28,28 @@ const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
+const allowedOrigins = [
+  "http://localhost:5173",             // Local Frontend
+  "http://localhost:5174",
+  "https://pm-internship-frontend.vercel.app",    // <--- REPLACE THIS with your actual Vercel App URL
+  "https://pm-internship-frontend.vercel.app" // Add any other variations if you renamed it
+];
+
 // ✅ CORS Configuration - Allow localhost origins
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, Postman, curl)
-      if (!origin) return callback(null, true);
-      
-      // Allow any localhost origin during development
-      if (origin.startsWith('http://localhost:')) {
-        return callback(null, true);
-      }
-      
-      // Check against env variable for production
-      if (origin === process.env.FRONTEND_URL) {
-        return callback(null, true);
-      }
-      
-      callback(new Error('Not allowed by CORS'));
-    },
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      // If the origin is NOT in the list, log it so you can see what url is being blocked
+      console.log("Blocked by CORS:", origin); 
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
