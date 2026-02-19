@@ -8,10 +8,16 @@ const sendEmailWithAttachment = async (toEmail, subject, text, filename, fileBuf
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail', // Use Gmail Service
+      host: 'smtp.gmail.com', // Explicitly set host
+      port: 465,              // Use SSL Port
+      secure: true, 
       auth: {
-        user: 'purvanshu1375@gmail.com', // <--- Your Gmail Address
-        pass: 'boph oawz rkoj cmwv',    // <--- The 16-char App Password
+        user: process.env.EMAIL_USER, // <--- Your Gmail Address
+        pass: process.env.EMAIL_PASS,    // <--- The 16-char App Password
       },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
 
     // Send Mail
@@ -42,10 +48,16 @@ const sendEmailWithAttachment = async (toEmail, subject, text, filename, fileBuf
 // Reuse existing transporter configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Or 'smtp.ethereal.email' for testing
+  host: 'smtp.gmail.com', // Explicitly set host
+  port: 465,              // Use SSL Port
+  secure: true, 
   auth: {
-    user: 'purvanshu1375@gmail.com',
-    pass: 'boph oawz rkoj cmwv'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 // Generic Send Function
