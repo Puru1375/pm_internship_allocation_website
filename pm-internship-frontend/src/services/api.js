@@ -2,7 +2,7 @@
 
 import { storeJweToken, retrieveJweToken, clearStoredToken, isValidJweFormat } from '../utils/cryptoUtils';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const RESUME_API_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RESUME_API_URL) || 'http://localhost:5004/api/resumes';
 
 /* =========================================================
