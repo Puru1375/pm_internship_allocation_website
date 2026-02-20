@@ -29,8 +29,8 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-4">
           <Link to="/" className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-brand-blue font-bold' : 'text-slate-600 hover:text-brand-blue'}`}>Home</Link>
-          <a href="#features" className="text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors">Features</a>
-          <a href="#about" className="text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors">About</a>
+          {/* <a href="#features" className="text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors">Features</a>
+          <a href="#about" className="text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors">About</a> */}
           
           <div className="h-4 w-px bg-slate-200 mx-1"></div>
           
@@ -51,7 +51,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Nav Dropdown */}
+      {/* Mobile Nav Dropdown */} 
       {isOpen && (
         <div className="md:hidden bg-white border-t border-slate-100 p-4 space-y-3 shadow-lg absolute w-full">
           <Link to="/" 

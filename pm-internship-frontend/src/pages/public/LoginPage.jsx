@@ -437,7 +437,7 @@ export default function LoginPage() {
             <button className="flex-1 bg-white text-slate-900 shadow-sm py-2 rounded-md text-sm font-semibold transition-all">
                 Sign In
             </button>
-            <Link to="/register" className="flex-1 text-slate-500 hover:text-slate-700 py-2 rounded-md text-sm font-medium text-center transition-all">
+            <Link to="/register/intern" className="flex-1 text-slate-500 hover:text-slate-700 py-2 rounded-md text-sm font-medium text-center transition-all">
                 Register
             </Link>
           </div>
