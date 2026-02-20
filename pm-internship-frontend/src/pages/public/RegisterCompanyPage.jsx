@@ -24,6 +24,7 @@ export default function RegisterCompanyPage() {
   const [ceoSign, setCeoSign] = useState(null);
   const [registrationDoc, setRegistrationDoc] = useState(null);
   const [otp, setOtp] = useState('');
+  const [displayOtp, setDisplayOtp] = useState(''); // ✅ OTP to display on screen
   const [loading, setLoading] = useState(false);
   const [docUploading, setDocUploading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -173,7 +174,8 @@ export default function RegisterCompanyPage() {
       });
 
       if (res?.success) {
-        setMessage(res.message || 'OTP sent to your email');
+        setMessage(res.message || 'Your 6-digit OTP is shown below. Please enter it to verify your email.');
+        setDisplayOtp(res?.otp || ''); // ✅ Get OTP from response
         setStep('verify');
       } else {
         setError(res?.message || 'Registration failed');
@@ -495,7 +497,23 @@ export default function RegisterCompanyPage() {
 
         {step === 'verify' && (
           <form onSubmit={handleVerify} className="space-y-5">
-            <div className="text-center text-slate-700 text-sm">Enter the OTP sent to <span className="font-semibold text-slate-900">{email}</span></div>
+            {/* ✅ OTP Display Div - Show the verification code */}
+            {displayOtp && (
+              <div className="p-4 sm:p-6 rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
+                <div className="text-center mb-4">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-600 mb-2 uppercase tracking-wide">Your Verification Code</p>
+                  <div className="text-4xl sm:text-5xl font-bold text-green-600 tracking-widest font-mono">{displayOtp}</div>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-3">Valid for 10 minutes</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-green-100">
+                  <p className="text-xs sm:text-sm text-slate-700 text-center">
+                    <span className="font-semibold">👉 Enter this code below</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="text-center text-slate-700 text-sm">Enter the OTP shown above to activate your account.</div>
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-2">OTP</label>
               <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} maxLength={6} disabled={loading} className="w-full px-4 py-3 text-center tracking-[0.5em] text-lg font-mono rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none" placeholder="000000" />

@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit'); 
 const QRCode = require('qrcode');
-const { sendEmailWithAttachment } = require('../utils/emailService');
+// const { sendEmailWithAttachment } = require('../utils/emailService');  // ✅ COMMENTED OUT - Email service disabled
 
 
 
@@ -436,17 +436,20 @@ exports.sendCertificateEmail = async (req, res) => {
     doc.on('end', async () => {
         const pdfData = Buffer.concat(buffers);
 
-        // 3. Send Email
-        const emailSent = await sendEmailWithAttachment(
-            cert.intern_email,
-            `Certificate of Completion - ${cert.job_title}`,
-            `Dear ${cert.intern_name},\n\nCongratulations on successfully completing your internship at ${cert.company_name}.\n\nPlease find your Certificate of Completion attached.\n\nBest Wishes,\nSkillBridge Team`,
-            `Certificate-${cert.intern_name}.pdf`,
-            pdfData
-        );
+        // 3. Send Email (COMMENTED OUT - Email service disabled)
+        // const emailSent = await sendEmailWithAttachment(
+        //     cert.intern_email,
+        //     `Certificate of Completion - ${cert.job_title}`,
+        //     `Dear ${cert.intern_name},\n\nCongratulations on successfully completing your internship at ${cert.company_name}.\n\nPlease find your Certificate of Completion attached.\n\nBest Wishes,\nSkillBridge Team`,
+        //     `Certificate-${cert.intern_name}.pdf`,
+        //     pdfData
+        // );
 
-        if(emailSent) res.json({ success: true, message: 'Email sent successfully' });
-        else res.status(500).json({ message: 'Failed to send email' });
+        const emailSent = true;  // Assume success when email disabled
+        console.log(`📧 [EMAIL DISABLED] Would send certificate to: ${cert.intern_email}`);
+
+        if(emailSent) res.json({ success: true, message: 'Certificate generated successfully' });
+        else res.status(500).json({ message: 'Failed to generate certificate' });
     });
 
     // --- PDF Content (Same logic as downloadCertificate, with QR verify link) ---

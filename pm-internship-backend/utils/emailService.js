@@ -1,64 +1,51 @@
-const nodemailer = require('nodemailer');
 const dns = require('dns');
 const util = require('util');
 
+// Resend configuration - commented out until email service is fixed
+// const { Resend } = require('resend');
+// const resolveMx = util.promisify(dns.resolveMx);
+// const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Feature flag: set ENABLE_EMAIL_SERVICE=true in .env when email service is ready
+const ENABLE_EMAIL_SERVICE = (process.env.ENABLE_EMAIL_SERVICE === 'true');
 const resolveMx = util.promisify(dns.resolveMx);
 
 const sendEmailWithAttachment = async (toEmail, subject, text, filename, fileBuffer) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail', // Use Gmail Service
-      host: 'smtp.gmail.com', // Explicitly set host
-      port: 465,              // Use SSL Port
-      secure: true, 
-      auth: {
-        user: process.env.EMAIL_USER, // <--- Your Gmail Address
-        pass: process.env.EMAIL_PASS,    // <--- The 16-char App Password
-      },
-      family: 4,     
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-    });
-
-    // Send Mail
-    const info = await transporter.sendMail({
-      from: '"SkillBridge Portal" <YOUR_REAL_GMAIL@gmail.com>',
-      to: toEmail,
-      subject: subject,
-      text: text,
-      attachments: [
-        {
-          filename: filename,
-          content: fileBuffer,
-          contentType: 'application/pdf'
-        }
-      ]
-    });
-
-    console.log("📨 Real Email sent to:", toEmail);
+  // Email service is disabled - return success without sending
+  if (!ENABLE_EMAIL_SERVICE) {
+    console.log("📧 [EMAIL DISABLED] Would send attachment email to:", toEmail);
+    console.log("   Subject:", subject);
+    console.log("   File:", filename);
+    console.log("   To enable email, set ENABLE_EMAIL_SERVICE=true in .env");
     return true;
-  } catch (error) {
-    console.error("Email Error:", error);
-    return false;
   }
+
+  // Uncomment below when email service is fixed
+  // try {
+  //   const { Resend } = require('resend');
+  //   const resend = new Resend(process.env.RESEND_API_KEY);
+  //   
+  //   await resend.emails.send({
+  //     from: 'onboarding@resend.dev',
+  //     to: [toEmail],
+  //     subject,
+  //     text,
+  //     attachments: [
+  //       {
+  //         filename,
+  //         content: fileBuffer.toString('base64')
+  //       }
+  //     ]
+  //   });
+  //
+  //   console.log("📨 Email sent to:", toEmail);
+  //   return true;
+  // } catch (error) {
+  //   console.error("Email Error:", error);
+  //   return false;
+  // }
 };
 
-
-
-// Reuse existing transporter configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // Or 'smtp.ethereal.email' for testing
-  host: 'smtp.gmail.com', // Explicitly set host
-  port: 465,              // Use SSL Port
-  secure: true, 
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  family: 4,     
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-});
 
 // Generic Send Function
 const checkEmailDomain = async (email) => {
@@ -92,6 +79,14 @@ const checkEmailDomain = async (email) => {
 };
 
 const sendEmail = async (to, subject, htmlContent) => {
+  // Email service is disabled - return success without sending
+  if (!ENABLE_EMAIL_SERVICE) {
+    console.log("📧 [EMAIL DISABLED] Would send email to:", to);
+    console.log("   Subject:", subject);
+    console.log("   To enable email, set ENABLE_EMAIL_SERVICE=true in .env");
+    return true;
+  }
+
   // 1. First, validate the Domain (Catches gmil.com, yaho.com errors)
   const isValidDomain = await checkEmailDomain(to);
   
@@ -100,22 +95,24 @@ const sendEmail = async (to, subject, htmlContent) => {
     throw new Error(`Invalid Email Domain. Please check if '${to.split('@')[1]}' is correct.`);
   }
 
-  try {
-    // 2. Send Email
-    await transporter.sendMail({
-      from: '"SkillBridge Portal" <no-reply@skillbridge.gov.in>',
-      to: to,
-      subject: subject,
-      html: htmlContent,
-    });
-    
-    console.log(`📧 Email sent to ${to}`);
-    return true;
-
-  } catch (error) {
-    console.error("❌ Email Delivery Failed:", error.message);
-    throw new Error("Failed to send email. The address might be invalid.");
-  }
+  // Uncomment below when email service is fixed
+  // try {
+  //   const { Resend } = require('resend');
+  //   const resend = new Resend(process.env.RESEND_API_KEY);
+  //   
+  //   await resend.emails.send({
+  //     from: 'onboarding@resend.dev',
+  //     to: [to],
+  //     subject,
+  //     html: htmlContent
+  //   });
+  //   
+  //   console.log(`📧 Email sent to ${to}`);
+  //   return true;
+  // } catch (error) {
+  //   console.error("❌ Email Delivery Failed:", error.message);
+  //   throw new Error("Failed to send email. The address might be invalid.");
+  // }
 };
 
 module.exports = { sendEmailWithAttachment, sendEmail };
