@@ -9,12 +9,14 @@ require('dotenv').config();
  * - Local .env (DB_*)
  */
 const pool = new Pool({
-  user: process.env.POSTGRES_USER || process.env.DB_USER,
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.POSTGRES_DB || process.env.DB_NAME,
-  password: process.env.POSTGRES_PASSWORD || process.env.DB_PASSWORD,
-  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
+  // user: process.env.POSTGRES_USER || process.env.DB_USER,
+  // host: process.env.DB_HOST || 'localhost',
+  // database: process.env.POSTGRES_DB || process.env.DB_NAME,
+  // password: process.env.POSTGRES_PASSWORD || process.env.DB_PASSWORD,
+  // port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
 
+  // ✅ Support DATABASE_URL for platforms like Heroku/Supabase
+  connectionString: process.env.DATABASE_URL,
   // ✅ Safe pool defaults (won't break current system)
   max: 20,                     // max clients in pool
   idleTimeoutMillis: 30000,    // close idle clients after 30s
