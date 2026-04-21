@@ -33,7 +33,8 @@ const allowedOrigins = [
   "http://localhost:5174",
   "https://pminternshipallocation.vercel.app",    // <--- REPLACE THIS with your actual Vercel App URL
   "https://pminternshipallocation.vercel.app",// Add any other variations if you renamed it
-  "https://pminternship.online" // Add your custom domain if you have one
+  "https://pminternship.online",
+  "https://www.pminternship.online" // Add your custom domain if you have one
 ];
 
 // ✅ CORS Configuration - Allow localhost origins
