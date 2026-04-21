@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const PDFDocument = require('pdfkit');
-// const { sendEmailWithAttachment, sendEmail } = require('../utils/emailService');  // ✅ COMMENTED OUT - Email service disabled
+const { sendEmailWithAttachment, sendEmail } = require('../utils/emailService');
 
 // @desc    Get current company profile
 // @route   GET /api/company/profile
@@ -166,17 +166,16 @@ exports.updateCompanyProfile = async (req, res) => {
               </div>
             `;
 
-            // Send email to each admin user (COMMENTED OUT - Email service disabled)
+            // Send email to each admin user
             let emailsSent = 0;
             for (const adminUser of adminUsersResult.rows) {
-              // try {
-              //   await sendEmail(adminUser.email, `Company Profile Update: ${updatedCompanyName}`, adminEmailContent);
-              //   emailsSent++;
-              //   console.log(`✅ Admin notification email sent to: ${adminUser.email}`);
-              // } catch (individualEmailErr) {
-              //   console.error(`⚠️ Failed to send email to ${adminUser.email}: ${individualEmailErr.message}`);
-              // }
-              console.log(`📧 [EMAIL DISABLED] Would notify admin: ${adminUser.email}`);
+              try {
+                await sendEmail(adminUser.email, `Company Profile Update: ${updatedCompanyName}`, adminEmailContent);
+                emailsSent++;
+                console.log(`✅ Admin notification email sent to: ${adminUser.email}`);
+              } catch (individualEmailErr) {
+                console.error(`⚠️ Failed to send email to ${adminUser.email}: ${individualEmailErr.message}`);
+              }
             }
             
             console.log(`✅ Total admin notification emails sent: ${emailsSent}/${adminUsersResult.rows.length}`);
@@ -361,25 +360,58 @@ exports.sendOfferLetter = async (req, res) => {
     doc.on('end', async () => {
         const pdfData = Buffer.concat(buffers);
 
-        // 3. Send Email with improved HTML template (COMMENTED OUT - Email service disabled)
-        const emailSent = true;  // Assume success when email disabled
-        console.log(`📧 [EMAIL DISABLED] Would send internship offer to: ${data.intern_email}`);
+        // 3. Send Email with HTML template
+        const offerEmailContent = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold;">🎉 Congratulations!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Internship Offer Letter</p>
+            </div>
+            
+            <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+                Hi ${data.intern_name},
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                We are thrilled to offer you the position of <strong>${data.job_title}</strong> at <strong>${data.company_name}</strong>!
+              </p>
+              
+              <div style="background: #f0fdf4; border: 2px solid #10b981; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #047857; font-size: 16px; font-weight: bold;">📋 Offer Details</h3>
+                <p style="margin: 8px 0; color: #334155;"><strong>Position:</strong> ${data.job_title}</p>
+                <p style="margin: 8px 0; color: #334155;"><strong>Duration:</strong> ${data.duration}</p>
+                <p style="margin: 8px 0; color: #334155;"><strong>Stipend:</strong> ${data.stipend}</p>
+              </div>
+              
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                Your offer letter is attached. Please review and let us know if you have questions.
+              </p>
+              
+              <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+                Best regards,<br>
+                <strong>${data.company_name}</strong> Team
+              </p>
+            </div>
+          </div>
+        `;
         
-        // COMMENTED OUT EMAIL SENDING - RESTORE WHEN EMAIL SERVICE IS READY
-        // const emailSent = await sendEmailWithAttachment(
-        //     data.intern_email, 
-        //     `🎉 Congratulations! Internship Offer from ${data.company_name}`,
-        //     `<div style=...>[HTML TEMPLATE]</div>`,
-        //     `Offer-Letter-${data.intern_name}.pdf`,
-        //     pdfData
-        // );
+        try {
+          const emailSent = await sendEmailWithAttachment(
+              data.intern_email, 
+              `🎉 Congratulations! Internship Offer from ${data.company_name}`,
+              offerEmailContent,
+              `Offer-Letter-${data.intern_name}.pdf`,
+              pdfData
+          );
 
-        if(emailSent) {
-            // Update Status
-            await pool.query("UPDATE applications SET status = 'Offer Sent' WHERE id = $1", [applicationId]);
-            res.json({ success: true, message: 'Offer Letter generated and ready for candidate!' });
-        } else {
-            res.status(500).json({ message: 'Failed to generate offer letter' });
+          if(emailSent) {
+              await pool.query("UPDATE applications SET status = 'Offer Sent' WHERE id = $1", [applicationId]);
+              res.json({ success: true, message: 'Offer letter sent to candidate successfully!' });
+          }
+        } catch (emailErr) {
+          console.error('Failed to send offer email:', emailErr);
+          res.status(500).json({ message: 'Failed to send offer letter email' });
         }
     });
 
@@ -428,15 +460,41 @@ exports.sendConfirmationEmail = async (req, res) => {
 
     // Send Email
     const emailContent = `
-      <h3>Congratulations ${data.name}!</h3>
-      <p>We are thrilled to confirm your internship for the position of <b>${data.title}</b> at <b>${data.company_name}</b>.</p>
-      <p><b>Start Date:</b> ${new Date(data.start_date).toDateString()}</p>
-      <p>Please report to the office (or online portal) at 9:00 AM.</p>
-      <br/><p>Best Regards,<br/>HR Team</p>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: bold;">✅ Internship Confirmed!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Onboarding Instructions</p>
+        </div>
+        
+        <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+          <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+            Hi ${data.name},
+          </p>
+          
+          <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+            We are thrilled to confirm your internship for the position of <strong>${data.title}</strong> at <strong>${data.company_name}</strong>.
+          </p>
+          
+          <div style="background: #f3e8ff; border: 2px solid #8b5cf6; border-radius: 8px; padding: 25px; margin: 30px 0;">
+            <h3 style="margin: 0 0 15px 0; color: #6d28d9; font-size: 16px; font-weight: bold;">📅 Important Information</h3>
+            <p style="margin: 8px 0; color: #334155;"><strong>Start Date:</strong> ${new Date(data.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p style="margin: 8px 0; color: #334155;"><strong>Reporting Time:</strong> 9:00 AM</p>
+          </div>
+          
+          <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+            Best regards,<br>
+            HR Team, ${data.company_name}
+          </p>
+        </div>
+      </div>
     `;
 
-    // await sendEmail(data.email, "Internship Confirmation & Onboarding", emailContent);  // ✅ COMMENTED OUT - Email service disabled
-    console.log(`📧 [EMAIL DISABLED] Would send confirmation email to: ${data.email}`);
+    try {
+      await sendEmail(data.email, "Internship Confirmation & Onboarding", emailContent);
+      console.log(`✅ Confirmation email sent to: ${data.email}`);
+    } catch (emailErr) {
+      console.error(`⚠️ Failed to send confirmation email: ${emailErr.message}`);
+    }
 
     // Update Status
     await pool.query("UPDATE applications SET status = 'Confirmation Sent' WHERE id = $1", [applicationId]);

@@ -1,5 +1,5 @@
 const pool = require('../config/db');
-// const { sendEmail } = require('../utils/emailService');  // ✅ COMMENTED OUT - Email service disabled
+const { sendEmail } = require('../utils/emailService');
 
 // @desc    Get Dashboard Stats
 // @route   GET /api/admin/stats
@@ -57,60 +57,94 @@ exports.verifyCompany = async (req, res) => {
       [status, req.user.id, companyId]
     );
 
-    // Send email notification (COMMENTED OUT - Email service disabled)
+    // Send email notification
     try {
       if (status === 'Verified') {
-        // await sendEmail(
-        //   company.email,
-        //   "Company Verification Approved - SkillBridge",
-        //   `
-        //     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        //       <h2 style="color: #10b981;">🎉 Congratulations!</h2>
-        //       <p>Dear <strong>${company.company_name}</strong>,</p>
-        //       <p>We are pleased to inform you that your company profile has been <strong>verified and approved</strong> by our admin team.</p>
-        //       <p>You can now log in to your account and start posting internship opportunities for students.</p>
-        //       <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
-        //         <p style="margin: 0;"><strong>Next Steps:</strong></p>
-        //         <ul style="margin: 10px 0;">
-        //           <li>Log in to your company account</li>
-        //           <li>Complete your company profile</li>
-        //           <li>Post internship opportunities</li>
-        //           <li>Review applications from students</li>
-        //         </ul>
-        //       </div>
-        //       <p>Thank you for choosing SkillBridge!</p>
-        //       <p style="color: #64748b; font-size: 12px; margin-top: 30px;">
-        //         This is an automated email. Please do not reply to this message.
-        //       </p>
-        //     </div>
-        //   `
-        // );
-        console.log(`📧 [EMAIL DISABLED] Would send approval email to: ${company.email}`);
+        const approvalEmailContent = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold;">🎉 Congratulations!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Company Verification Approved</p>
+            </div>
+            
+            <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+                Dear <strong>${company.company_name}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                We are pleased to inform you that your company profile has been <strong>verified and approved</strong> by our admin team.
+              </p>
+              
+              <div style="background: #f0fdf4; border: 2px solid #10b981; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #047857; font-size: 16px; font-weight: bold;">✅ What's Next</h3>
+                <ul style="margin: 0; padding-left: 20px; color: #334155;">
+                  <li style="margin: 8px 0;">Log in to your company account</li>
+                  <li style="margin: 8px 0;">Complete your company profile</li>
+                  <li style="margin: 8px 0;">Post internship opportunities</li>
+                  <li style="margin: 8px 0;">Review applications from students</li>
+                </ul>
+              </div>
+              
+              <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+                Thank you for choosing SkillBridge!<br>
+                Best regards,<br>
+                <strong>SkillBridge Admin Team</strong>
+              </p>
+            </div>
+          </div>
+        `;
+        
+        await sendEmail(
+          company.email,
+          "🎉 Company Verification Approved - SkillBridge",
+          approvalEmailContent
+        );
+        console.log(`✅ Approval email sent to: ${company.email}`);
       } else if (status === 'Rejected') {
-        // await sendEmail(
-        //   company.email,
-        //   "Company Verification Update - SkillBridge",
-        //   `
-        //     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        //       <h2 style="color: #ef4444;">Application Status Update</h2>
-        //       <p>Dear <strong>${company.company_name}</strong>,</p>
-        //       <p>Thank you for your interest in SkillBridge. After careful review, we regret to inform you that your company verification could not be approved at this time.</p>
-        //       <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
-        //         <p style="margin: 0;"><strong>What you can do:</strong></p>
-        //         <ul style="margin: 10px 0;">
-        //           <li>Review your company information for accuracy</li>
-        //           <li>Contact our support team for more details</li>
-        //           <li>Reapply with updated information if applicable</li>
-        //         </ul>
-        //       </div>
-        //       <p>If you have any questions, please contact our support team at <a href="mailto:support@skillbridge.com">support@skillbridge.com</a></p>
-        //       <p style="color: #64748b; font-size: 12px; margin-top: 30px;">
-        //         This is an automated email. Please do not reply to this message.
-        //       </p>
-        //     </div>
-        //   `
-        // );
-        console.log(`📧 [EMAIL DISABLED] Would send rejection email to: ${company.email}`);
+        const rejectionEmailContent = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Application Status Update</h1>
+              <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Verification Status</p>
+            </div>
+            
+            <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+                Dear <strong>${company.company_name}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                Thank you for your interest in SkillBridge. After careful review, we regret to inform you that your company verification could not be approved at this time.
+              </p>
+              
+              <div style="background: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #b91c1c; font-size: 16px; font-weight: bold;">📌 What You Can Do</h3>
+                <ul style="margin: 0; padding-left: 20px; color: #334155;">
+                  <li style="margin: 8px 0;">Review your company information for accuracy</li>
+                  <li style="margin: 8px 0;">Contact our support team for more details</li>
+                  <li style="margin: 8px 0;">Reapply with updated information if applicable</li>
+                </ul>
+              </div>
+              
+              <p style="margin: 20px 0 0 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                If you have any questions, please contact our support team.
+              </p>
+              
+              <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+                Best regards,<br>
+                <strong>SkillBridge Admin Team</strong>
+              </p>
+            </div>
+          </div>
+        `;
+        
+        await sendEmail(
+          company.email,
+          "Company Verification Update - SkillBridge",
+          rejectionEmailContent
+        );
+        console.log(`✅ Rejection email sent to: ${company.email}`);
       }
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);

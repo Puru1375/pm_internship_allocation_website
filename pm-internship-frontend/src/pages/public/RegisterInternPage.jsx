@@ -11,7 +11,6 @@ export default function RegisterInternPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [displayOtp, setDisplayOtp] = useState(''); // ✅ OTP to display on screen
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -135,8 +134,7 @@ export default function RegisterInternPage() {
 
       if (res?.success) {
         setStep('verify');
-        setDisplayOtp(res?.otp || ''); // ✅ Get OTP from response
-        setMessage(res.message || 'Your 6-digit OTP is shown below. Please enter it to verify your email.');
+        setMessage(res.message || 'Check your email for the verification code. Please enter it below.');
       } else {
         // Handle backend error
         const errorMsg = res?.message || 'Registration failed';
@@ -412,24 +410,8 @@ export default function RegisterInternPage() {
 
         {step === 'verify' && (
           <form ref={verifyRef} onSubmit={handleVerify} className="space-y-5">
-            {/* ✅ OTP Display Div - Show the verification code */}
-            {displayOtp && (
-              <div className="p-4 sm:p-6 rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
-                <div className="text-center mb-4">
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 mb-2 uppercase tracking-wide">Your Verification Code</p>
-                  <div className="text-4xl sm:text-5xl font-bold text-green-600 tracking-widest font-mono">{displayOtp}</div>
-                  <p className="text-[10px] sm:text-xs text-slate-500 mt-3">Valid for 10 minutes</p>
-                </div>
-                <div className="bg-white rounded-lg p-3 border border-green-100">
-                  <p className="text-xs sm:text-sm text-slate-700 text-center">
-                    <span className="font-semibold">👉 Enter this code below</span>
-                  </p>
-                </div>
-              </div>
-            )}
-
             <div className="text-center text-slate-700 text-sm">
-              Enter the OTP shown above to activate your account.
+              Enter the 6-digit OTP sent to your email to activate your account.
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-2" htmlFor="otp">OTP</label>

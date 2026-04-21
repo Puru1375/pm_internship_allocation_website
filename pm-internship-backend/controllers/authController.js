@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwtService = require('../auth/JwtService');
 const crypto = require('crypto');
-// const { sendEmail } = require('../utils/emailService');  // ✅ COMMENTED OUT - Email service disabled
+const { sendEmail } = require('../utils/emailService');
 const { recordFailedAttempt, clearFailedAttempts, getRemainingAttempts, MAX_ATTEMPTS } = require('../middleware/rateLimitMiddleware');
 const { verifyCaptcha } = require('../utils/captchaVerifier');
 
@@ -57,8 +57,7 @@ exports.registerUser = async (req, res) => {
     const expiry = new Date(Date.now() + 10 * 60000); // 10 mins from now
 
     // Check if email service is enabled
-    const ENABLE_EMAIL_SERVICE = (process.env.ENABLE_EMAIL_SERVICE === 'true');
-    const isVerified = !ENABLE_EMAIL_SERVICE; // Auto-verify if email is disabled
+    const isVerified = false;
 
     // Insert user
     const newUser = await pool.query(
@@ -87,37 +86,66 @@ exports.registerUser = async (req, res) => {
       console.log('Company profile created successfully for user:', userId);
     }
 
-// Send verification email (COMMENTED OUT - Email service disabled)
-    // try {
-    //   if (ENABLE_EMAIL_SERVICE) {
-    //     await sendEmail(normalizedEmail, "Verify Your Account - SkillBridge", `...`);
-    //   } else {
-    //     console.log("📧 [EMAIL SERVICE DISABLED] Skipping verification email. User auto-verified.");
-    //   }
-    // } catch (emailError) {
-    //   if (ENABLE_EMAIL_SERVICE) {
-    //     console.error("⚠️ Email sending failed:", emailError.message);
-    //     await pool.query('DELETE FROM users WHERE id = $1', [userId]);
-    //     return res.status(400).json({ 
-    //       message: emailError.message || "Invalid Email Address. Could not send OTP." 
-    //     });
-    //   }
-    // }
+    // Send verification email with OTP
+    try {
+      const emailContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Email Verification</h1>
+            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Verify your account to get started</p>
+          </div>
+          
+          <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+              Hi ${fullName},
+            </p>
+            
+            <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+              Thank you for registering with us! Please use the OTP below to verify your email address:
+            </p>
+            
+            <div style="background: #f1f5f9; border: 2px dashed #667eea; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 13px; font-weight: 600;">YOUR VERIFICATION CODE</p>
+              <p style="margin: 0; color: #667eea; font-size: 36px; font-weight: bold; letter-spacing: 4px;">${otp}</p>
+            </div>
+            
+            <p style="margin: 0 0 20px 0; color: #334155; font-size: 14px;">
+              This code will expire in <strong>10 minutes</strong>. Do not share this code with anyone.
+            </p>
+            
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 13px; line-height: 1.6;">
+                💡 <strong>Tip:</strong> If you didn't register for this account, please ignore this email.
+              </p>
+            </div>
+            
+            <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+              Best regards,<br>
+              <strong>PM Internship Team</strong>
+            </p>
+          </div>
+        </div>
+      `;
+      
+      await sendEmail(normalizedEmail, 'Verify Your Email - PM Internship', emailContent);
+      console.log('✅ Verification email sent to:', normalizedEmail);
+    } catch (emailError) {
+      console.error("⚠️ Email sending failed:", emailError.message);
+      // Don't block registration if email fails, but notify user
+      // You may want to delete the user if email is critical
+    }
 
-    // Success - Return OTP in response (for development)
+    // Success - Return confirmation message
     const successMessage = role === 'company' 
-      ? 'Registration successful! Your company profile will be reviewed by admin.' 
-      : 'Registration successful!';
+      ? 'Registration successful! Please check your email to verify your account.' 
+      : 'Registration successful! Please check your email to verify your account.';
 
     const responseData = { 
       success: true,
       message: successMessage,
       userId, 
       email: normalizedEmail,
-      // ✅ Always show OTP since email service is disabled - display in page for user to verify
-      otp: otp,
-      otpExpiresIn: '10 minutes',
-      nextStep: 'Please enter the OTP below to verify your email'
+      nextStep: 'Check your email for the verification code'
     };
 
     res.status(201).json(responseData);
@@ -349,24 +377,64 @@ exports.forgotPassword = async (req, res) => {
     // Store OTP in database
     await pool.query('UPDATE users SET otp_code = $1, otp_expires_at = $2 WHERE email = $3', [otp, expiry, normalizedEmail]);
 
-    // Send Email with OTP (COMMENTED OUT - Email service disabled)
-    // try {
-    //   await sendEmail(normalizedEmail, "Password Reset OTP - SkillBridge", `...`);
-    //   res.json({ message: 'OTP sent to your email' });
-    // } catch (err) {
-    //   console.error(err);
-    //   res.status(500).json({ message: 'Server error' });
-    // }
-
-    // ✅ Return OTP in response for development
-    res.json({ 
-      success: true,
-      message: 'OTP generated for password reset',
-      email: normalizedEmail,
-      // ✅ Show OTP in development
-      otp: process.env.NODE_ENV !== 'production' ? otp : undefined,
-      expiresIn: '10 minutes'
-    });
+    // Send password reset email with OTP
+    try {
+      const emailContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Password Reset</h1>
+            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Follow the instructions below to reset your password</p>
+          </div>
+          
+          <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+              Hi there,
+            </p>
+            
+            <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+              We received a request to reset your password. Use the OTP below to proceed with your password reset:
+            </p>
+            
+            <div style="background: #fef3c7; border: 2px dashed #f5576c; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+              <p style="margin: 0 0 10px 0; color: #92400e; font-size: 13px; font-weight: 600;">YOUR RESET CODE</p>
+              <p style="margin: 0; color: #f5576c; font-size: 36px; font-weight: bold; letter-spacing: 4px;">${otp}</p>
+            </div>
+            
+            <p style="margin: 0 0 20px 0; color: #334155; font-size: 14px;">
+              This code will expire in <strong>10 minutes</strong>. Use this code to reset your password.
+            </p>
+            
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 13px; line-height: 1.6;">
+                ⚠️ <strong>Security:</strong> If you didn't request a password reset, please ignore this email and secure your account.
+              </p>
+            </div>
+            
+            <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+              Best regards,<br>
+              <strong>PM Internship Team</strong>
+            </p>
+          </div>
+        </div>
+      `;
+      
+      await sendEmail(normalizedEmail, 'Password Reset - PM Internship', emailContent);
+      console.log('✅ Password reset email sent to:', normalizedEmail);
+      
+      res.json({ 
+        success: true,
+        message: 'Password reset instructions have been sent to your email',
+        email: normalizedEmail
+      });
+    } catch (emailError) {
+      console.error("⚠️ Email sending failed:", emailError.message);
+      // Still return success to not reveal if email exists
+      res.json({ 
+        success: true,
+        message: 'If an account exists with this email, you will receive password reset instructions',
+        email: normalizedEmail
+      });
+    }
 
   } catch (err) {
     console.error(err);

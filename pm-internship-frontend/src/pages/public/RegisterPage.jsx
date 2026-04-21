@@ -20,7 +20,6 @@ export default function RegisterPage({ initialRole = 'intern', allowRoleSwitch =
   });
   const [verificationEmail, setVerificationEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [displayOtp, setDisplayOtp] = useState(''); // ✅ OTP received from backend to display on screen
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
@@ -549,19 +548,18 @@ export default function RegisterPage({ initialRole = 'intern', allowRoleSwitch =
           }
 
           setVerificationEmail(emailToVerify);
-          setDisplayOtp(otpFromResponse);  // ✅ Set the OTP to display on screen
           setStep('verify');
           setLoading(false);
 
           if (role === 'company') {
             setMessage(
               res.data?.message ||
-              `Registration successful! Your 6-digit verification code is shown below. After verification, your documents will be uploaded automatically.`
+              `Registration successful! Check your email for the verification code. After verification, you can upload your documents.`
             );
           } else {
             setMessage(
               res.data?.message || 
-              `Registration successful! Your 6-digit verification code is shown below. Please enter it to verify your email.`
+              `Registration successful! Check your email for the verification code.`
             );
           }
         } else {
@@ -1930,21 +1928,7 @@ export default function RegisterPage({ initialRole = 'intern', allowRoleSwitch =
           {step === 'verify' && (
             <form onSubmit={handleVerify} className="space-y-3 sm:space-y-5 mb-4 sm:mb-6">
               
-              {/* ✅ OTP Display Div - Show the verification code */}
-              {displayOtp && (
-                <div className="p-4 sm:p-6 rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
-                  <div className="text-center mb-4">
-                    <p className="text-xs sm:text-sm font-semibold text-slate-600 mb-2 uppercase tracking-wide">Your Verification Code</p>
-                    <div className="text-4xl sm:text-5xl font-bold text-green-600 tracking-widest font-mono">{displayOtp}</div>
-                    <p className="text-[10px] sm:text-xs text-slate-500 mt-3">Valid for 10 minutes</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 border border-green-100">
-                    <p className="text-xs sm:text-sm text-slate-700 text-center">
-                      <span className="font-semibold">👉 Enter this code below</span> or click the copy button to paste it
-                    </p>
-                  </div>
-                </div>
-              )}
+
 
               <div className="p-3 sm:p-4 rounded-xl border border-blue-100 bg-white shadow-sm flex flex-col gap-2 sm:gap-3">
                 <div className="flex items-start gap-2 sm:gap-3">
@@ -2026,7 +2010,6 @@ export default function RegisterPage({ initialRole = 'intern', allowRoleSwitch =
                   onClick={() => {
                     setStep('register');
                     setOtp('');
-                    setDisplayOtp('');  // ✅ Clear displayed OTP
                     setError('');
                     setMessage('');
                   }}

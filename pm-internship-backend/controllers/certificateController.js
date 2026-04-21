@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit'); 
 const QRCode = require('qrcode');
-// const { sendEmailWithAttachment } = require('../utils/emailService');  // ✅ COMMENTED OUT - Email service disabled
+const { sendEmailWithAttachment } = require('../utils/emailService');
 
 
 
@@ -436,20 +436,60 @@ exports.sendCertificateEmail = async (req, res) => {
     doc.on('end', async () => {
         const pdfData = Buffer.concat(buffers);
 
-        // 3. Send Email (COMMENTED OUT - Email service disabled)
-        // const emailSent = await sendEmailWithAttachment(
-        //     cert.intern_email,
-        //     `Certificate of Completion - ${cert.job_title}`,
-        //     `Dear ${cert.intern_name},\n\nCongratulations on successfully completing your internship at ${cert.company_name}.\n\nPlease find your Certificate of Completion attached.\n\nBest Wishes,\nSkillBridge Team`,
-        //     `Certificate-${cert.intern_name}.pdf`,
-        //     pdfData
-        // );
+        // 3. Send Email with certificate attachment
+        const emailContent = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold;">🎓 Certificate of Completion</h1>
+              <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Internship Success</p>
+            </div>
+            
+            <div style="background-color: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px;">
+                Dear ${cert.intern_name},
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                Congratulations on successfully completing your internship as <strong>${cert.job_title}</strong> at <strong>${cert.company_name}</strong>!
+              </p>
+              
+              <div style="background: #fffbeb; border: 2px solid #f59e0b; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #b45309; font-size: 16px; font-weight: bold;">📜 Certificate Details</h3>
+                <p style="margin: 8px 0; color: #334155;"><strong>Completion Date:</strong> ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p style="margin: 8px 0; color: #334155;"><strong>Position:</strong> ${cert.job_title}</p>
+                <p style="margin: 8px 0; color: #334155;"><strong>Company:</strong> ${cert.company_name}</p>
+              </div>
+              
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px; line-height: 1.6;">
+                Your certificate of completion is attached. Keep this for your records and future reference.
+              </p>
+              
+              <p style="margin: 20px 0 0 0; color: #64748b; font-size: 12px;">
+                Best regards,<br>
+                <strong>SkillBridge Team</strong>
+              </p>
+            </div>
+          </div>
+        `;
 
-        const emailSent = true;  // Assume success when email disabled
-        console.log(`📧 [EMAIL DISABLED] Would send certificate to: ${cert.intern_email}`);
+        try {
+          const emailSent = await sendEmailWithAttachment(
+              cert.intern_email,
+              `🎓 Certificate of Completion - ${cert.job_title}`,
+              emailContent,
+              `Certificate-${cert.intern_name}.pdf`,
+              pdfData
+          );
 
-        if(emailSent) res.json({ success: true, message: 'Certificate generated successfully' });
-        else res.status(500).json({ message: 'Failed to generate certificate' });
+          if(emailSent) {
+              res.json({ success: true, message: 'Certificate generated and sent successfully!' });
+          } else {
+              res.status(500).json({ message: 'Failed to send certificate email' });
+          }
+        } catch (emailErr) {
+          console.error('Failed to send certificate email:', emailErr);
+          res.status(500).json({ message: 'Failed to send certificate email' });
+        }
     });
 
     // --- PDF Content (Same logic as downloadCertificate, with QR verify link) ---
