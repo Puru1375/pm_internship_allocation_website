@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./pm-internship-backend
+      dockerfile: Dockerfile
+    container_name: pminternship-server
+    ports:
+      - "5000:5000"
+    networks:
+      - pm-network
+    restart: unless-stopped
+
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ./pm-internship-frontend
+      dockerfile: Dockerfile
+    container_name: pminternship-client
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - pm-network
+    restart: unless-stopped
+
+networks:
+  pm-network:
+    driver: bridge

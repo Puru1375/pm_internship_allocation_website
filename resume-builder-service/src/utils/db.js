@@ -1,15 +1,32 @@
 const { Pool } = require('pg');
 const config = require('../config/config');
 
-if (!config.database.password || typeof config.database.password !== 'string') {
-  console.warn('⚠️ DB_PASSWORD not set; using fallback value from config.');
-}
-
+/**
+ * ✅ Database Pool
+ * Supports both Supabase (DATABASE_URL) and Local PostgreSQL
+ */
 const pool = new Pool(config.database);
 
-pool.on('connect', () => {
-  console.log('✅ Database connected successfully');
-});
+const connectWithRetry = () => {
+  console.log('⏳ Attempting to connect to PostgreSQL...');
+
+  pool
+    .connect()
+    .then((client) => {
+      console.log('✅ PostgreSQL connected successfully');
+      client.release();
+    })
+    .catch((err) => {
+      console.error(
+        '❌ PostgreSQL connection failed. Retrying in 5 seconds...\n',
+        err.message
+      );
+      setTimeout(connectWithRetry, 5000);
+    });
+};
+
+// Initial connection attempt
+connectWithRetry();
 
 pool.on('error', (err) => {
   console.error('❌ Unexpected database error:', err);

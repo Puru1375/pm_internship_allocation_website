@@ -31,6 +31,8 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",             // Local Frontend
   "http://localhost:5174",
+  "http://localhost:80",
+  "http://65.2.126.3:80",          // Local IP (if accessed via IP)
   "https://pminternshipallocation.vercel.app",    // <--- REPLACE THIS with your actual Vercel App URL
   "https://pminternshipallocation.vercel.app",// Add any other variations if you renamed it
   "https://pminternship.online",
